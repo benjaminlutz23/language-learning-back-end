@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Translation Results</h1>
+        <form action="/check_translations" method="post">
+            {% for english_word, image_path in objects %}
+                <div class="result-item">
+                    <img src="{{ url_for('extracted_file', filename=image_path.split('/')[-1]) }}" alt="{{ english_word }}">
+                    <p>{{ english_word }}: <input type="text" name="guesses" placeholder="Your guess"></p>
+                    <input type="hidden" name="words" value="{{ english_word }}">
+                    <input type="hidden" name="image_paths" value="{{ image_path }}">
+                </div>
+            {% endfor %}
+            <input type="hidden" name="language" value="{{ language }}">
+            <div class="button-container">
+                <button type="submit" style="background-color: #09275f;">Check</button>
+                <a href="/" class="button" style="background-color: #09275f;">Upload Another Image</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+

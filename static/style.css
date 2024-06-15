@@ -1,0 +1,115 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 600px;
+    max-width: 90%;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #09275f;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input[type="file"],
+select,
+input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button,
+a.button {
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #09275f;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+button:hover,
+a.button:hover {
+    background-color: #061a3f;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+img {
+    max-width: 100px;
+    height: auto;
+}
+
+.object-image {
+    max-width: 150px;
+    max-height: 150px;
+    display: block;
+    margin: 0 auto;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.result-item img {
+    margin-right: 10px;
+    max-width: 150px;
+    height: auto;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Add some space between the buttons */
+    margin-top: 20px;
+}

@@ -1,0 +1,5 @@
+indexes:
+- kind: MissedWord
+  properties:
+  - name: language
+  - name: timestamp

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Missed Words</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Review Missed Words</h1>
+        <form action="/review_guess" method="post">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Word</th>
+                        <th>Your Guess</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for word in missed_words %}
+                    <tr>
+                        <td>
+                            {% if word['image_path'] %}
+                            <img src="{{ url_for('extracted_file', filename=word['image_path'].split('/')[-1]) }}" alt="{{ word['english_word'] }}" class="object-image">
+                            {% endif %}
+                        </td>
+                        <td>{{ word['english_word'] }}</td>
+                        <td>
+                            <input type="hidden" name="entity_keys" value="{{ word.key.id }}">
+                            <input type="text" name="guesses" placeholder="Your guess">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit">Check</button>
+        </form>
+        <form action="/" method="get">
+            <button type="submit">Back to Home</button>
+        </form>
+    </div>
+</body>
+</html>

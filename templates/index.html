@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+    <title>Upload an Image</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload an Image</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="language">Select a language:</label>
+            <select id="language" name="language" required>
+                <option value="BG" {% if language == "BG" %}selected{% endif %}>Bulgarian</option>
+                <option value="CS" {% if language == "CS" %}selected{% endif %}>Czech</option>
+                <option value="DA" {% if language == "DA" %}selected{% endif %}>Danish</option>
+                <option value="DE" {% if language == "DE" %}selected{% endif %}>German</option>
+                <option value="EL" {% if language == "EL" %}selected{% endif %}>Greek</option>
+                <option value="EN-GB" {% if language == "EN-GB" %}selected{% endif %}>English (British)</option>
+                <option value="EN-US" {% if language == "EN-US" %}selected{% endif %}>English (American)</option>
+                <option value="ES" {% if language == "ES" %}selected{% endif %}>Spanish</option>
+                <option value="ET" {% if language == "ET" %}selected{% endif %}>Estonian</option>
+                <option value="FI" {% if language == "FI" %}selected{% endif %}>Finnish</option>
+                <option value="FR" {% if language == "FR" %}selected{% endif %}>French</option>
+                <option value="HU" {% if language == "HU" %}selected{% endif %}>Hungarian</option>
+                <option value="ID" {% if language == "ID" %}selected{% endif %}>Indonesian</option>
+                <option value="IT" {% if language == "IT" %}selected{% endif %}>Italian</option>
+                <option value="JA" {% if language == "JA" %}selected{% endif %}>Japanese</option>
+                <option value="KO" {% if language == "KO" %}selected{% endif %}>Korean</option>
+                <option value="LT" {% if language == "LT" %}selected{% endif %}>Lithuanian</option>
+                <option value="LV" {% if language == "LV" %}selected{% endif %}>Latvian</option>
+                <option value="NB" {% if language == "NB" %}selected{% endif %}>Norwegian (Bokmål)</option>
+                <option value="NL" {% if language == "NL" %}selected{% endif %}>Dutch</option>
+                <option value="PL" {% if language == "PL" %}selected{% endif %}>Polish</option>
+                <option value="PT-PT" {% if language == "PT-PT" %}selected{% endif %}>Portuguese (European)</option>
+                <option value="PT-BR" {% if language == "PT-BR" %}selected{% endif %}>Portuguese (Brazilian)</option>
+                <option value="RO" {% if language == "RO" %}selected{% endif %}>Romanian</option>
+                <option value="RU" {% if language == "RU" %}selected{% endif %}>Russian</option>
+                <option value="SK" {% if language == "SK" %}selected{% endif %}>Slovak</option>
+                <option value="SL" {% if language == "SL" %}selected{% endif %}>Slovenian</option>
+                <option value="SV" {% if language == "SV" %}selected{% endif %}>Swedish</option>
+                <option value="TR" {% if language == "TR" %}selected{% endif %}>Turkish</option>
+                <option value="UK" {% if language == "UK" %}selected{% endif %}>Ukrainian</option>
+                <option value="ZH" {% if language == "ZH" %}selected{% endif %}>Chinese (simplified)</option>
+            </select>
+            <br><br>
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Upload Image</button>
+        </form>
+        <br>
+        <form action="/review_missed_words" method="post">
+            <input type="hidden" name="language" value="{{ language }}">
+            <button type="submit">Review Missed Words</button>
+        </form>
+    </div>
+</body>
+</html>

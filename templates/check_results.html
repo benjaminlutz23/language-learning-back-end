@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+    <title>Translation Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Translation Check Results</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Your Guess</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for word, guess, result in results %}
+                <tr>
+                    <td>{{ word }}</td>
+                    <td>{{ guess }}</td>
+                    <td>{{ result }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="/" class="button">Upload another image</a>
+    </div>
+</body>
+</html>
