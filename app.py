@@ -2,7 +2,7 @@ import os
 import io
 import logging
 import requests
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory, session
+from flask import Flask, request, render_template, redirect, jsonify, send_from_directory, session
 from google.cloud import vision
 from PIL import Image
 from gbmodel import Model
@@ -13,6 +13,10 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['EXTRACTED_FOLDER'] = 'extracted'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload size
 app.secret_key = 'supersecretkey'
+
+# Ensure the upload and extracted directories exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['EXTRACTED_FOLDER'], exist_ok=True)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -36,6 +40,7 @@ def detect_objects(image_path):
     objects = response.localized_object_annotations
     unique_objects = []
     seen_names = set()
+    app.logger.debug(f"Detected objects: {[obj.name for obj in objects]}")
     for obj in objects:
         if obj.name not in seen_names:
             unique_objects.append(obj)
@@ -43,18 +48,6 @@ def detect_objects(image_path):
         if len(unique_objects) >= 5:  # Limit to 5 objects
             break
     return unique_objects
-
-def translate_text(text, target_lang):
-    url = "https://api-free.deepl.com/v2/translate"
-    params = {
-        "auth_key": DEEPL_API_KEY,
-        "text": text,
-        "target_lang": target_lang
-    }
-    response = requests.post(url, data=params)
-    result = response.json()
-    translation = result['translations'][0]['text']
-    return translation
 
 def extract_objects(image_path, objects):
     image = Image.open(image_path)
@@ -68,9 +61,24 @@ def extract_objects(image_path, objects):
         cropped_image = image.crop((x_min, y_min, x_max, y_max))
         timestamp = int(time.time() * 1000)
         extracted_path = os.path.join(app.config['EXTRACTED_FOLDER'], f'extracted_{timestamp}_{index}.png')
+        app.logger.debug(f"Extracting object {obj.name} to {extracted_path}")
         cropped_image.save(extracted_path)
         extracted_objects.append(extracted_path)
     return extracted_objects
+
+
+def translate_text(text, target_lang):
+    url = "https://api-free.deepl.com/v2/translate"
+    params = {
+        "auth_key": DEEPL_API_KEY,
+        "text": text,
+        "target_lang": target_lang
+    }
+    response = requests.post(url, data=params)
+    result = response.json()
+    translation = result['translations'][0]['text']
+    return translation
+
 
 @app.route('/')
 def index():
@@ -91,18 +99,20 @@ def upload_image():
     if file:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         try:
-            if not os.path.exists(app.config['EXTRACTED_FOLDER']):
-                os.makedirs(app.config['EXTRACTED_FOLDER'])
             app.logger.info(f"Saving file to {file_path}")
             file.save(file_path)
             objects = detect_objects(file_path)
             extracted_objects = extract_objects(file_path, objects)
             object_names = [obj.name for obj in objects]
-            return render_template('results.html', objects=zip(object_names, extracted_objects), language=language)
+            response_data = {
+                "objects": [{"name": name, "image_path": path} for name, path in zip(object_names, extracted_objects)]
+            }
+            return jsonify(response_data)
         except Exception as e:
             app.logger.error(f"Error processing file: {e}")
             return redirect(request.url)
     return redirect(request.url)
+
 
 @app.route('/extracted/<filename>')
 def extracted_file(filename):
