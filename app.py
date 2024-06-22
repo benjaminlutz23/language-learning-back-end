@@ -60,11 +60,13 @@ def extract_objects(image_path, objects):
         y_max = max(vertex[1] for vertex in vertices) * image.height
         cropped_image = image.crop((x_min, y_min, x_max, y_max))
         timestamp = int(time.time() * 1000)
-        extracted_path = os.path.join(app.config['EXTRACTED_FOLDER'], f'extracted_{timestamp}_{index}.png')
+        extracted_filename = f'extracted_{timestamp}_{index}.png'
+        extracted_path = os.path.join(app.config['EXTRACTED_FOLDER'], extracted_filename)
         app.logger.debug(f"Extracting object {obj.name} to {extracted_path}")
         cropped_image.save(extracted_path)
-        extracted_objects.append(extracted_path)
+        extracted_objects.append(f'{extracted_filename}')
     return extracted_objects
+
 
 
 def translate_text(text, target_lang):
@@ -112,6 +114,7 @@ def upload_image():
             app.logger.error(f"Error processing file: {e}")
             return redirect(request.url)
     return redirect(request.url)
+
 
 
 @app.route('/extracted/<filename>')
