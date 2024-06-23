@@ -47,7 +47,7 @@ class Model:
         entity = self.client.get(entity_key)
         if entity:
             entity['correct_guesses'] += 1
-            if entity['correct_guesses'] >= 5:
+            if entity['correct_guesses'] >= 3:
                 self.client.delete(entity_key)
             else:
                 self.client.put(entity)

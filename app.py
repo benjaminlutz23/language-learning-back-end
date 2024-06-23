@@ -143,10 +143,11 @@ def review_guess():
             correct_translation = entity['translation']
             if guess.lower() == correct_translation.lower():
                 datastore_model.increment_correct_guess(entity_key)
-                results.append((entity['english_word'], guess, "Correct"))
+                results.append({"word": entity['english_word'], "guess": guess, "result": "Correct"})
             else:
-                results.append((entity['english_word'], guess, f"Incorrect - Correct: {correct_translation}"))
-    return render_template('review_results.html', results=results)
+                results.append({"word": entity['english_word'], "guess": guess, "result": f"Incorrect - Correct: {correct_translation}"})
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
