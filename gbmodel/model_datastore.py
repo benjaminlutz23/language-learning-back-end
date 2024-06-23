@@ -37,7 +37,8 @@ class Model:
                 'image_path': result['image_path'],
                 'english_word': result['english_word'],
                 'translation': result['translation'],
-                'correct_guesses': result['correct_guesses']
+                'correct_guesses': result['correct_guesses'],
+                'timestamp': result.get('timestamp')  # Retrieve the timestamp field
             }
             missed_words.append(missed_word)
         return missed_words

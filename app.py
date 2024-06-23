@@ -61,7 +61,6 @@ def upload_image():
             return redirect(request.url)
     return redirect(request.url)
 
-
 @app.route('/extracted/<filename>')
 def extracted_file(filename):
     return send_from_directory(app.config['EXTRACTED_FOLDER'], filename)
@@ -110,7 +109,6 @@ def check_translations():
         app.logger.error(f"Error in check_translations: {e}")
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/review_missed_words', methods=['POST'])
 def review_missed_words():
     language = request.json.get('language')
@@ -122,12 +120,12 @@ def review_missed_words():
     for word in missed_words:
         response.append({
             'id': word['key'].id,
-            'correct_guesses': word.get('correct_guesses', 0),
-            'english_word': word.get('english_word', ''),
-            'image_path': word.get('image_path', ''),
-            'language': word.get('language', ''),
-            'timestamp': word.get('timestamp', ''),
-            'translation': word.get('translation', '')
+            'correct_guesses': word['correct_guesses'],
+            'english_word': word['english_word'],
+            'image_path': word['image_path'],
+            'language': word['language'],
+            'timestamp': word['timestamp'].isoformat() if word.get('timestamp') else '',
+            'translation': word['translation']
         })
     
     app.logger.debug(f"Sending response: {response}")
