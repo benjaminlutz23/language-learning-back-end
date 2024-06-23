@@ -1,12 +1,9 @@
 import os
-import io
 import logging
-import requests
 from flask import Flask, request, render_template, redirect, jsonify, send_from_directory, session
-from google.cloud import vision
-from PIL import Image
 from gbmodel import Model
-import time
+from vision_utils import detect_objects, extract_objects
+from translate_utils import translate_text, LANGUAGE_MAP
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -30,73 +27,6 @@ DEEPL_API_KEY = os.getenv('DEEPL_API_KEY')
 # Initialize the model with your project ID
 project_id = 'cloud-lutz-benlutz-422823'
 datastore_model = Model(project_id)
-
-def detect_objects(image_path):
-    client = vision.ImageAnnotatorClient()
-    with io.open(image_path, 'rb') as image_file:
-        content = image_file.read()
-    image = vision.Image(content=content)
-    response = client.object_localization(image=image)
-    objects = response.localized_object_annotations
-    unique_objects = []
-    seen_names = set()
-    app.logger.debug(f"Detected objects: {[obj.name for obj in objects]}")
-    for obj in objects:
-        if obj.name not in seen_names:
-            unique_objects.append(obj)
-            seen_names.add(obj.name)
-        if len(unique_objects) >= 5:  # Limit to 5 objects
-            break
-    return unique_objects
-
-def extract_objects(image_path, objects):
-    image = Image.open(image_path)
-    extracted_objects = []
-    for index, obj in enumerate(objects):
-        vertices = [(vertex.x, vertex.y) for vertex in obj.bounding_poly.normalized_vertices]
-        x_min = min(vertex[0] for vertex in vertices) * image.width
-        y_min = min(vertex[1] for vertex in vertices) * image.height
-        x_max = max(vertex[0] for vertex in vertices) * image.width
-        y_max = max(vertex[1] for vertex in vertices) * image.height
-        cropped_image = image.crop((x_min, y_min, x_max, y_max))
-        timestamp = int(time.time() * 1000)
-        extracted_filename = f'extracted_{timestamp}_{index}.png'
-        extracted_path = os.path.join(app.config['EXTRACTED_FOLDER'], extracted_filename)
-        app.logger.debug(f"Extracting object {obj.name} to {extracted_path}")
-        cropped_image.save(extracted_path)
-        extracted_objects.append(f'{extracted_filename}')
-    return extracted_objects
-
-
-
-def translate_text(text, target_lang):
-    url = "https://api-free.deepl.com/v2/translate"
-    
-    # Correct the target language code for Japanese
-    if target_lang == 'JP':
-        target_lang = 'JA'
-    
-    params = {
-        "auth_key": DEEPL_API_KEY,
-        "text": text,
-        "target_lang": target_lang
-    }
-    response = requests.post(url, data=params)
-    
-    # Log the raw response for debugging
-    app.logger.debug(f"DeepL API response: {response.text}")
-    
-    try:
-        result = response.json()
-        translation = result['translations'][0]['text']
-        return translation
-    except KeyError as e:
-        app.logger.error(f"Error extracting translation: {e}")
-        raise ValueError("Translation response is invalid") from e
-    except Exception as e:
-        app.logger.error(f"Unexpected error: {e}")
-        raise
-
 
 @app.route('/')
 def index():
@@ -132,7 +62,6 @@ def upload_image():
     return redirect(request.url)
 
 
-
 @app.route('/extracted/<filename>')
 def extracted_file(filename):
     return send_from_directory(app.config['EXTRACTED_FOLDER'], filename)
@@ -164,7 +93,7 @@ def check_translations():
         results = []
         for word, guess, image_path in zip(words, guesses, image_paths):
             try:
-                correct_translation = translate_text(word, language)
+                correct_translation = translate_text(word, language, DEEPL_API_KEY)
                 if guess.lower() == correct_translation.lower():
                     results.append({"word": word, "guess": guess, "result": "Correct"})
                 else:
@@ -184,10 +113,25 @@ def check_translations():
 
 @app.route('/review_missed_words', methods=['POST'])
 def review_missed_words():
-    language = request.form['language']
+    language = request.json.get('language')
     missed_words = datastore_model.get_missed_words(language)
     app.logger.debug(f"Missed words retrieved: {missed_words}")
-    return render_template('review_missed_words.html', missed_words=missed_words)
+
+    # Ensure the response is in the correct format for the frontend
+    response = []
+    for word in missed_words:
+        response.append({
+            'id': word['key'].id,
+            'correct_guesses': word.get('correct_guesses', 0),
+            'english_word': word.get('english_word', ''),
+            'image_path': word.get('image_path', ''),
+            'language': word.get('language', ''),
+            'timestamp': word.get('timestamp', ''),
+            'translation': word.get('translation', '')
+        })
+    
+    app.logger.debug(f"Sending response: {response}")
+    return jsonify(response)
 
 @app.route('/review_guess', methods=['POST'])
 def review_guess():
