@@ -71,15 +71,31 @@ def extract_objects(image_path, objects):
 
 def translate_text(text, target_lang):
     url = "https://api-free.deepl.com/v2/translate"
+    
+    # Correct the target language code for Japanese
+    if target_lang == 'JP':
+        target_lang = 'JA'
+    
     params = {
         "auth_key": DEEPL_API_KEY,
         "text": text,
         "target_lang": target_lang
     }
     response = requests.post(url, data=params)
-    result = response.json()
-    translation = result['translations'][0]['text']
-    return translation
+    
+    # Log the raw response for debugging
+    app.logger.debug(f"DeepL API response: {response.text}")
+    
+    try:
+        result = response.json()
+        translation = result['translations'][0]['text']
+        return translation
+    except KeyError as e:
+        app.logger.error(f"Error extracting translation: {e}")
+        raise ValueError("Translation response is invalid") from e
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {e}")
+        raise
 
 
 @app.route('/')
@@ -123,21 +139,48 @@ def extracted_file(filename):
 
 @app.route('/check_translations', methods=['POST'])
 def check_translations():
-    words = request.form.getlist('words')
-    guesses = request.form.getlist('guesses')
-    image_paths = request.form.getlist('image_paths')
-    language = request.form['language']
-    results = []
-    for word, guess, image_path in zip(words, guesses, image_paths):
-        correct_translation = translate_text(word, language)
-        if guess.lower() == correct_translation.lower():
-            results.append((word, guess, "Correct"))
-        else:
-            results.append((word, guess, f"Incorrect - Correct: {correct_translation}"))
-            # Save missed words to datastore
-            app.logger.debug(f"Adding missed word: language={language}, img_path={image_path}, english_word={word}, translation={correct_translation}")
-            datastore_model.add_missed_word(language, image_path, word, correct_translation)
-    return render_template('check_results.html', results=results)
+    try:
+        data = request.get_json()
+        if not data:
+            app.logger.error("No JSON data received")
+            return jsonify({"error": "No JSON data received"}), 400
+        
+        app.logger.debug(f"Received JSON data: {data}")
+
+        words = data.get('words')
+        guesses = data.get('guesses')
+        image_paths = data.get('image_paths')
+        language = data.get('language')
+
+        app.logger.debug(f"Received words: {words}")
+        app.logger.debug(f"Received guesses: {guesses}")
+        app.logger.debug(f"Received image_paths: {image_paths}")
+        app.logger.debug(f"Received language: {language}")
+
+        if not words or not guesses or not image_paths or not language:
+            app.logger.error("Missing data in the request")
+            return jsonify({"error": "Missing data"}), 400
+        
+        results = []
+        for word, guess, image_path in zip(words, guesses, image_paths):
+            try:
+                correct_translation = translate_text(word, language)
+                if guess.lower() == correct_translation.lower():
+                    results.append({"word": word, "guess": guess, "result": "Correct"})
+                else:
+                    results.append({"word": word, "guess": guess, "result": f"Incorrect - Correct: {correct_translation}"})
+                    # Save missed words to datastore
+                    app.logger.debug(f"Adding missed word: language={language}, img_path={image_path}, english_word={word}, translation={correct_translation}")
+                    datastore_model.add_missed_word(language, image_path, word, correct_translation)
+            except ValueError as e:
+                app.logger.error(f"Translation error for word '{word}': {e}")
+                results.append({"word": word, "guess": guess, "result": f"Error - {str(e)}"})
+        
+        return jsonify(results)
+    except Exception as e:
+        app.logger.error(f"Error in check_translations: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/review_missed_words', methods=['POST'])
 def review_missed_words():
