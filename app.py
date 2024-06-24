@@ -2,8 +2,8 @@ import os
 import logging
 from flask import Flask, request, render_template, redirect, jsonify, send_from_directory, session
 from gbmodel import Model
-from vision_utils import detect_objects, extract_objects
-from translate_utils import translate_text, LANGUAGE_MAP
+from utils.vision_utils import detect_objects, extract_objects
+from utils.translate_utils import translate_text, LANGUAGE_MAP
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
